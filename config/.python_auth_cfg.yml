@@ -1,0 +1,6 @@
+# template python-services cfg 
+# copy this cfg to home dir ~/.python_auth_cfg.yml cfg
+gitlab:
+  gitlab_url      : 'https://git.example.com'
+
+  
