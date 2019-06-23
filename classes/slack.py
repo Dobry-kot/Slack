@@ -1,16 +1,19 @@
-import requests, os, yaml
+import os, yaml, requests
 
-class slack():
-
+class slack(object):
+    
     PWD = os.getenv("HOME")
-  
-    with open("%s/.python_auth_cfg.yml" % PWD, 'r') as auth:
-        auth_conf = yaml.load(auth, Loader=yaml.FullLoader)
 
     def __init__(self):
+        pass   
+
+    def defaultOptions(self):
 
         try:
-            auth_data = slack.auth_conf['slack']
+            with open("%s/.python_auth_cfg.yml" % slack.PWD, 'r') as auth:
+                auth_conf = yaml.load(auth, Loader=yaml.FullLoader)
+
+            auth_data = auth_conf['slack']
 
             self.token      =  auth_data['api_token']
             self.namespace  =  auth_data['name_space']
@@ -24,49 +27,64 @@ class slack():
         except KeyError as error:
             print('slack.init | Error <%s>' % error )
 
-    def user_invite(self, **data_account):
+        return self.command
+
+    class users(object):
+
+        def __init__(self):
+            self._slack     = slack()
+            self._options   = self._slack.defaultOptions()
+            self._token     = self._slack.token
+  
+        def search(self, **username):
+
+            data_accounts  = {
+                              'token'     : self._token
+                              }
+
+            r  = requests.post(self._options['user_list'], data = data_accounts)
+
+            if r.status_code == 200:
+                members = r.json().get('members')
         
-        data_account_create = {
-                               'email'     : data_account['email'],
-                               'first_name': data_account['first_name'],
-                               'last_name' : data_account['last_name'],
-                               'token'     : self.token,
-                               'set_active': "true",
-                               'resend'    : "true"
-                               }
+                for user_data in members:
+                    email = user_data.get('profile').get('email')
 
-        r = requests.post(self.command['users_invite'], data = data_account_create)
-        print('slack.init | <%s | %s>' % (r.status_code, r.json()))
+                    if email != None :
+                        user_name   = email.split('@')[0]
+                        status      = user_data.get('deleted')
 
-    def user_inactive(self, username):
+                        if user_name == username['username'] :
+                            self.user_id = user_data.get('id')
+                            print(self.user_id, user_name)
+                            return self.user_id
+                        else:
+                            pass
+                    else:
+                        pass
+            else:
+                print('slack.init.users.search | Error <%s>' % r.status_code)
+    
+        def inactive(self, user_id):
+   
+            data_account_inactive   =   {
+                                        'token' : self._token,
+                                        'user'  : user_id
+                                        }
+            print(data_account_inactive)
+            r = requests.post(self._options['user_inactive'], data=data_account_inactive)
+            print('slack.init.user_inactive |','| {}'.format(r.json()))
 
-        data_accounts  =    {
-                            'token'     : self.token,
-                            }
-
-        r  = requests.post(self.command['user_list'], data = data_accounts)
-
-        members                 = r.json().get('members')
-
-        for user in members:
-
-            user_id         = user.get('id')
-            status          = user.get('deleted') 
-            email           = user.get('profile').get('email')
-
-            try:
-                user_name   = email.split('@')[0]
-
-            except AttributeError or IndexError or KeyError as error:
-                print('slack.init.user_inactive |','{:<15} | {}'.format(user_name, error))
- 
-            if user_name == username and status == False:
-                
-                data_account_inactive   =   {
-                                             'token' : self.token,
-                                             'user'  : user_id
-                                             }
-
-                r = requests.post(self.command['user_inactive'], data=data_account_inactive)
-                print('slack.init.user_inactive |','{:<15} | {}'.format(user_name, r.json()))
-                
+        def invite(self, **data_account):
+            
+            data_account_create = {
+                                'email'     : data_account['email'],
+                                'first_name': data_account['first_name'],
+                                'last_name' : data_account['last_name'],
+                                'token'     : self._token,
+                                'set_active': "true",
+                                'resend'    : "true"
+                                }
+            print(data_account_create)
+            r = requests.post(self._options['users_invite'], data = data_account_create)
+            print('slack.init | <%s | %s>' % (r.status_code, r.json()))
