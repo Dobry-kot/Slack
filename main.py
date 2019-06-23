@@ -11,8 +11,11 @@ if __name__ == "__main__":
     last_name   = 'test'
 
 # class for working with users 
-    # slack = slack()
-    # slack.user_invite(email       = email,
-    #                   first_name  = first_name,
-    #                   last_name   = last_name)
-    # slack.user_inactive(username)
+    # session = slack()
+    # users   = session.users()
+    # user    = users.search(username = username)
+    # users.inactive(user)
+
+    # users.invite(email       = email,
+    #              first_name  = first_name,
+    #              last_name   = last_name)
